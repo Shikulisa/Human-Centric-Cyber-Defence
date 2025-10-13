@@ -45,3 +45,72 @@ It integrates a **fine-tuned BERT model** with a **Flask backend API** and a **C
 ---
 
 ## 🧩 System Architecture  
+┌───────────────────────────────────────────┐
+│ Chrome Extension │
+│───────────────────────────────────────────│
+│ Popup (UI) │ Content Script │ Service Worker │
+└─────────────┴────────────────┴────────────────┘
+│
+▼
+┌───────────────────────────────────────────┐
+│ Flask Backend │
+│───────────────────────────────────────────│
+│ Model API │ Feedback API │ SQLite Storage │
+└───────────────────────────────────────────┘
+│
+▼
+┌───────────────────────────────────────────┐
+│ BERT + Logistic Model │
+└───────────────────────────────────────────┘
+
+
+---
+
+## 🚀 Features  
+✅ Real-time Gmail phishing detection  
+✅ Chrome Extension integration  
+✅ Confidence scoring (model probability)  
+✅ Visual banners and labels  
+✅ User feedback collection  
+✅ Retrainable model pipeline  
+
+---
+
+## 🧪 Installation & Setup  
+
+### 1️⃣ Backend (Flask API)
+```bash
+# Clone the repo
+git clone https://github.com/Shikulisa/Human-Centric-Cyber-Defence.git
+cd Human-Centric-Cyber-Defence/backend
+
+# Create virtual environment
+python -m venv venv
+venv\Scripts\activate  # (Windows)
+
+# Install dependencies
+pip install -r requirements.txt
+
+# Run Flask server
+python app.py
+
+Human-Centric-Cyber-Defence/
+│
+├── backend/
+│   ├── app.py
+│   ├── feedback.db
+│   ├── model/
+│   │   ├── bert_base_uncased/
+│   │   ├── logistic_regression.pkl
+│   │   └── fine_tuned_bert.zip
+│   ├── requirements.txt
+│   └── unzip_model.py
+│
+└── gmail-phish-ext/
+    ├── manifest.json
+    ├── popup.html
+    ├── popup.css
+    ├── popup.js
+    ├── service_worker.js
+    └── content.js
+
