@@ -190,7 +190,6 @@ def create_jwt(email):
         algorithm="HS256"
     )
 
-
 @app.route("/auth/google", methods=["POST"])
 def auth_google():
     data = request.get_json() or {}
@@ -981,3 +980,52 @@ def version():
 # =====================================
 if __name__ == "__main__":
     app.run(debug=False)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    
