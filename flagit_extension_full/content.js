@@ -648,40 +648,7 @@ function forceClassifyVisibleEmails() {
       classifiedCount++;
     }
   }
-  
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-  
   console.log(`🔹 Initiated classification for ${classifiedCount} new emails`);
   return classifiedCount;
 }
