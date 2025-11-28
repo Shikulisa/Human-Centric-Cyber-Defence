@@ -1,4 +1,4 @@
-# Human-Centric Cyber Defence System
+# FLagit: Human-Centric Cyber Defence System
 
 This project implements an end-to-end phishing detection system that integrates a machine learning model, a Chrome Extension that operates within Gmail, a Flask backend API, and an administrative dashboard for monitoring and system management.
 
@@ -68,4 +68,22 @@ root/
 cd backend
 pip install -r requirements.txt
 python app.py
+
+## Chrome Extension
+
+1. Go to `chrome://extensions`
+2. Enable Developer Mode
+3. Click **Load unpacked**
+4. Select the `chrome-extension` folder
+
+---
+
+## Dashboard
+
+```bash
+cd dashboard
+npm install
+npm run dev
+
+
 
