@@ -35,7 +35,7 @@ React-based interface for viewing metrics, monitoring users, adjusting model thr
 ---
 
 ## Project Structure
-
+```
 root/
 │
 ├── backend/
@@ -56,4 +56,5 @@ root/
 │
 └── model-training/
 └── notebooks and scripts
+```
 
