@@ -1,0 +1,102 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <title>Flagit - Phishing Detector</title>
+    <link rel="stylesheet" href="popup.css" />
+  </head>
+  <body>
+    <div class="popup-container">
+      <!-- Header -->
+      <header class="header">
+        <div class="logo">
+          <div class="logo-icon">🛡️</div>
+          <div class="logo-text">
+            <h1>Flagit</h1>
+            <p>AI-Powered Phishing Detection</p>
+          </div>
+        </div>
+        <div class="status-indicator" id="status-indicator"></div>
+      </header>
+
+      <!-- Main Content -->
+      <main class="main-content">
+        <!-- Selection Summary -->
+        <div class="summary-card">
+          <div class="summary-header">
+            <h3 id="summary-title">Analyzing Selection</h3>
+            <button id="refresh-btn" class="refresh-btn" title="Refresh selection">
+              🔄
+            </button>
+          </div>
+          <div id="summary-detail" class="summary-detail">
+            <div class="loading-spinner"></div>
+          </div>
+        </div>
+
+        <!-- Classification Breakdown -->
+        <div id="breakdown-section" class="breakdown-section" style="display: none;">
+          <div class="breakdown-header">
+            <span>Classification Breakdown</span>
+          </div>
+          <div class="breakdown-stats">
+            <div class="stat-item safe">
+              <div class="stat-badge">✅</div>
+              <span class="stat-count" id="safe-count">0</span>
+              <span class="stat-label">Safe</span>
+            </div>
+            <div class="stat-item phishing">
+              <div class="stat-badge">🚨</div>
+              <span class="stat-count" id="phishing-count">0</span>
+              <span class="stat-label">Phishing</span>
+            </div>
+            <div class="stat-item unknown">
+              <div class="stat-badge">❓</div>
+              <span class="stat-count" id="unknown-count">0</span>
+              <span class="stat-label">Unknown</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Feedback Section -->
+        <div id="feedback-section" class="feedback-section" style="display: none;">
+          <div class="feedback-header">
+            <h4>Help Improve Flagit</h4>
+            <p>Was this classification accurate?</p>
+          </div>
+          <div class="feedback-buttons">
+            <button id="btn-correct" class="btn-feedback btn-correct">
+              <span class="btn-icon">✅</span>
+              <span class="btn-text">Correct</span>
+            </button>
+            <button id="btn-incorrect" class="btn-feedback btn-incorrect">
+              <span class="btn-icon">❌</span>
+              <span class="btn-text">Incorrect</span>
+            </button>
+          </div>
+          <div id="feedback-message" class="feedback-message"></div>
+        </div>
+
+        <!-- Empty State -->
+        <div id="empty-state" class="empty-state">
+          <div class="empty-icon">📧</div>
+          <h3>No Emails Selected</h3>
+          <p>Select one or more emails in Gmail, then open Flagit to analyze them for phishing attempts.</p>
+          <div class="empty-tip">
+            <strong>Tip:</strong> Click the checkbox next to any email to select it
+          </div>
+        </div>
+      </main>
+
+      <!-- Footer -->
+      <footer class="footer">
+        <div class="footer-info">
+          <span id="connection-status" class="connection-status">Connecting...</span>
+          <span class="footer-version">v2.2.0</span>
+        </div>
+      </footer>
+    </div>
+
+    <script src="popup.js"></script>
+  </body>
+</html>
