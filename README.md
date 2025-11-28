@@ -58,3 +58,14 @@ root/
 └── notebooks and scripts
 ```
 
+
+---
+
+## Installation and Setup
+
+### Backend
+```bash
+cd backend
+pip install -r requirements.txt
+python app.py
+
