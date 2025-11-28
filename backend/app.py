@@ -1,5 +1,5 @@
 # =====================================
-# 📦 Flagit Backend – Final Unified Build (2025)
+# Flagit Backend – Final Unified Build (2025)
 # WITH USER-CENTRIC DASHBOARD FEATURES + BACKEND PROTECTION
 # ==================================
 from dotenv import load_dotenv
@@ -18,13 +18,13 @@ from sqlalchemy.exc import SQLAlchemyError
 import os, json
 from urllib.parse import unquote
 
-# 🔐 Admin Authentication
+# Admin Authentication
 import jwt
 from google.oauth2 import id_token
 from google.auth.transport import requests as g_requests
 from functools import wraps
 
-# 📊 Google Sheets (for admin export)
+# Google Sheets (for admin export)
 from googleapiclient.discovery import build
 from google.oauth2 import service_account
 
@@ -100,17 +100,51 @@ GOOGLE_SHEET_ID = os.getenv("GOOGLE_SHEET_ID")
 
 
 # =====================================
+# Debug: Check Model Directory
+# =====================================
+print("Checking model directory...")
+
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+model_dir = os.path.join(BASE_DIR, "model", "fine_tuned_bert")
+
+print(f"Base directory: {BASE_DIR}")
+print(f"Model directory: {model_dir}")
+
+if not os.path.exists(model_dir):
+    print("ERROR: Model directory does not exist!")
+    print("Please ensure your model files are in the correct location.")
+    exit(1)
+
+print("Contents of model directory:")
+for root, dirs, files in os.walk(model_dir):
+    for file in files:
+        file_path = os.path.join(root, file)
+        rel_path = os.path.relpath(file_path, model_dir)
+        print(f"  - {rel_path}")
+
+# =====================================
 # Load ML Models
 # =====================================
-print("🔹 Loading models...")
+print("Loading models...")
 
-bert_path = "./model/fine_tuned_bert/bert_base_uncased"
-lr_path = "./model/fine_tuned_bert/logistic_regression.pkl"
-threshold_path = "./model/fine_tuned_bert/threshold.json"
+bert_path = model_dir
+lr_path = os.path.join(model_dir, "logistic_regression.pkl")
+threshold_path = os.path.join(model_dir, "threshold.json")
 
-tokenizer = BertTokenizer.from_pretrained(bert_path, local_files_only=True)
-bert = BertModel.from_pretrained(bert_path, local_files_only=True)
-lr_model = joblib.load(lr_path)
+# Check for required BERT files
+required_bert_files = ['config.json', 'pytorch_model.bin', 'vocab.txt']
+bert_files_exist = all(os.path.exists(os.path.join(bert_path, f)) for f in required_bert_files)
+
+if not bert_files_exist:
+    print("ERROR: Missing required BERT model files!")
+    for f in required_bert_files:
+        exists = os.path.exists(os.path.join(bert_path, f))
+        print(f"  {f}: {'EXISTS' if exists else 'MISSING'}")
+    exit(1)
+
+if not os.path.exists(lr_path):
+    print(f"ERROR: Logistic regression model not found: {lr_path}")
+    exit(1)
 
 THRESHOLD = 0.75
 if os.path.exists(threshold_path):
@@ -119,12 +153,21 @@ if os.path.exists(threshold_path):
     except:
         pass
 
-print("🔥 Using threshold:", THRESHOLD)
+print("Using threshold:", THRESHOLD)
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-bert.to(device).eval()
 
-print("✨ Models ready!")
+try:
+    tokenizer = BertTokenizer.from_pretrained(bert_path)
+    bert = BertModel.from_pretrained(bert_path)
+    bert.to(device).eval()
+    lr_model = joblib.load(lr_path)
+    
+    print("Models loaded successfully!")
+
+except Exception as e:
+    print(f"Error loading models: {e}")
+    exit(1)
 
 
 # =====================================
@@ -227,35 +270,35 @@ def require_admin(f):
     @wraps(f)
     def wrapper(*args, **kwargs):
         auth = request.headers.get("Authorization", "")
-        print(f"🔹 Auth header: {auth[:50]}...")  # Debug log
+        print(f"Auth header: {auth[:50]}...")
         
         if not auth.startswith("Bearer "):
-            print("❌ No Bearer token found")
+            print("No Bearer token found")
             return jsonify({"error": "Missing authorization token"}), 401
 
         token = auth.split(" ")[1]
         try:
             # Get JWT secret from environment
             jwt_secret = os.getenv("JWT_SECRET", "dev")
-            print(f"🔹 Using JWT secret: {jwt_secret[:10]}...")  # Debug
+            print(f"Using JWT secret: {jwt_secret[:10]}...")
             
             payload = jwt.decode(token, jwt_secret, algorithms=["HS256"])
-            print(f"🔹 Token payload: {payload}")  # Debug
+            print(f"Token payload: {payload}")
             
             if payload.get("role") != "admin":
-                print("❌ User is not admin")
+                print("User is not admin")
                 raise Exception("Not admin")
                 
-            print(f"✅ Admin access granted for: {payload.get('sub')}")
+            print(f"Admin access granted for: {payload.get('sub')}")
                 
         except jwt.ExpiredSignatureError:
-            print("❌ Token expired")
+            print("Token expired")
             return jsonify({"error": "Token expired"}), 401
         except jwt.InvalidTokenError as e:
-            print(f"❌ Invalid token: {e}")
+            print(f"Invalid token: {e}")
             return jsonify({"error": "Invalid token"}), 401
         except Exception as e:
-            print(f"❌ Auth error: {e}")
+            print(f"Auth error: {e}")
             return jsonify({"error": "Authentication failed"}), 401
 
         return f(*args, **kwargs)
@@ -282,7 +325,7 @@ def home():
     return jsonify({"message": "Flagit API Running!"})
 
 # =====================================
-# 🚀 IMPROVED PREDICT ROUTE (Better Timestamp Handling)
+# IMPROVED PREDICT ROUTE (Better Timestamp Handling)
 # =====================================
 @app.route("/predict", methods=["POST"])
 def predict():
@@ -291,31 +334,31 @@ def predict():
     sender = data.get("sender", "").lower()
     user = data.get("user", "unknown")
     
-    # ⬇️ BACKEND USER VALIDATION - PREVENT UNKNOWN USERS
+    # BACKEND USER VALIDATION - PREVENT UNKNOWN USERS
     if user in ['unknown', 'consistent_unknown', 'gmail_user'] or user.startswith('consistent_unknown_') or user.startswith('gmail_user_') or user.startswith('user_'):
         if 'strathmore.edu' in sender.lower():
             user = 'lisa.wanjiku@strathmore.edu'
-            print(f"🔹 Backend corrected user to: {user}")
+            print(f"Backend corrected user to: {user}")
         else:
             user = 'lisawanjiku100@gmail.com' 
-            print(f"🔹 Backend corrected user to: {user}")
+            print(f"Backend corrected user to: {user}")
     
-    # ⬇️ IMPROVED TIMESTAMP HANDLING
+    # IMPROVED TIMESTAMP HANDLING
     email_timestamp_str = data.get("email_timestamp")
-    print(f"🔹 PREDICT REQUEST - User: {user}, Sender: {sender}")
-    print(f"🔹 Received timestamp: {email_timestamp_str}")
+    print(f"PREDICT REQUEST - User: {user}, Sender: {sender}")
+    print(f"Received timestamp: {email_timestamp_str}")
     
     if email_timestamp_str:
         try:
             timestamp = parse_email_timestamp(email_timestamp_str)
-            print(f"✅ Successfully parsed timestamp: {timestamp}")
+            print(f"Successfully parsed timestamp: {timestamp}")
         except Exception as e:
-            print(f"❌ Could not parse email timestamp: {e}")
+            print(f"Could not parse email timestamp: {e}")
             timestamp = datetime.utcnow()
     else:
         # No timestamp provided, use current time (fallback)
         timestamp = datetime.utcnow()
-        print(f"🔹 No email timestamp provided, using current time: {timestamp}")
+        print(f"No email timestamp provided, using current time: {timestamp}")
 
     # Your existing prediction logic...
     if is_whitelisted_sender(sender):
@@ -344,18 +387,15 @@ def predict():
             timestamp=timestamp  # Use the actual email timestamp
         ))
         session.commit()
-        print(f"✅ Prediction saved - User: {user}, Result: {out['label']} at {timestamp}")
+        print(f"Prediction saved - User: {user}, Result: {out['label']} at {timestamp}")
     except Exception as e:
-        print(f"❌ Error saving prediction: {e}")
+        print(f"Error saving prediction: {e}")
         session.rollback()
     finally:
         session.close()
 
     return jsonify(out)
 
-# =====================================
-# SIMPLER FIX: Use Received ISO Timestamp
-# =====================================
 # =====================================
 # IMPROVED TIMESTAMP PARSING
 # =====================================
@@ -401,7 +441,7 @@ def parse_email_timestamp(timestamp_str):
             return parser.parse(timestamp_str)
             
     except Exception as e:
-        print(f"❌ Failed to parse timestamp '{timestamp_str}': {e}")
+        print(f"Failed to parse timestamp '{timestamp_str}': {e}")
         # Use current time but log the issue
         return datetime.utcnow()
 
@@ -453,7 +493,7 @@ def feedback():
     """Feedback endpoint for demo - always returns success"""
     data = request.get_json() or {}
     
-    print(f"📥 FEEDBACK RECEIVED: {data.get('text', '')[:100]}... - {data.get('label')}")
+    print(f"FEEDBACK RECEIVED: {data.get('text', '')[:100]}... - {data.get('label')}")
     
     # Return success immediately with thank you message
     return jsonify({
@@ -480,9 +520,6 @@ def get_feedbacks():
         session.close()
 
 
-# =====================================
-# NEW: GET ALL USERS
-# =====================================
 # =====================================
 # NEW: GET ALL USERS (Only 2 specific users)
 # =====================================
@@ -514,7 +551,7 @@ def admin_users():
             for user in users
         ])
     except Exception as e:
-        print(f"❌ Error in admin_users: {e}")
+        print(f"Error in admin_users: {e}")
         return jsonify({"error": str(e)}), 500
     finally:
         session.close()
@@ -549,15 +586,12 @@ def admin_user_predictions(user_email):
             for r in recs
         ])
     except Exception as e:
-        print(f"❌ Error in admin_user_predictions: {e}")
+        print(f"Error in admin_user_predictions: {e}")
         return jsonify({"error": str(e)}), 500
     finally:
         session.close()
 
 
-# =====================================
-# FIXED ADMIN – PREDICTIONS (Proper Sorting + Whitelist)
-# =====================================
 # =====================================
 # FIXED ADMIN – PREDICTIONS (Only 2 specific users)
 # =====================================
@@ -576,7 +610,7 @@ def admin_predictions():
             Prediction.id.desc()
         ).all()
         
-        print(f"🔹 Returning {len(recs)} predictions for allowed users: {ALLOWED_VIEW_USERS}")
+        print(f"Returning {len(recs)} predictions for allowed users: {ALLOWED_VIEW_USERS}")
         
         return jsonify([
             {
@@ -590,7 +624,7 @@ def admin_predictions():
             for r in recs
         ])
     except Exception as e:
-        print(f"❌ Error in admin_predictions: {e}")
+        print(f"Error in admin_predictions: {e}")
         return jsonify({"error": str(e)}), 500
     finally:
         session.close()
@@ -692,9 +726,6 @@ def update_threshold():
     
 
 # =====================================
-# IMPROVED ADMIN – EXPORT TO GOOGLE SHEETS (MULTI-TAB)
-# =====================================
-# =====================================
 # IMPROVED ADMIN – EXPORT TO GOOGLE SHEETS (ONLY 2 SPECIFIC USERS)
 # =====================================
 @app.route("/admin/export-sheets", methods=["POST"])
@@ -713,7 +744,7 @@ def export_sheets():
         
         users = [user[0] for user in users_data if user[0] in ALLOWED_EXPORT_USERS]
         
-        print(f"🔹 Exporting data for users: {users}")
+        print(f"Exporting data for users: {users}")
         
         if not users:
             return jsonify({"message": "No data to export for allowed users"}), 200
@@ -741,7 +772,7 @@ def export_sheets():
             if not sheet_name:
                 sheet_name = f"User_{users.index(user) + 1}"
             
-            print(f"🔹 Processing sheet for user: {user} -> '{sheet_name}'")
+            print(f"Processing sheet for user: {user} -> '{sheet_name}'")
             
             # Get user's predictions
             user_recs = session.query(Prediction).filter(
@@ -752,7 +783,7 @@ def export_sheets():
             ).all()
 
             if not user_recs:
-                print(f"🔹 No data for user {user}, skipping")
+                print(f"No data for user {user}, skipping")
                 continue
 
             # Convert to rows
@@ -783,7 +814,7 @@ def export_sheets():
                         body={}
                     ).execute()
                 except Exception as e:
-                    print(f"🔹 Could not clear sheet {sheet_name}, may not exist: {e}")
+                    print(f"Could not clear sheet {sheet_name}, may not exist: {e}")
 
                 # Update or create the sheet
                 result = service.spreadsheets().values().update(
@@ -795,11 +826,11 @@ def export_sheets():
 
                 updated_cells = result.get('updatedCells', 0)
                 total_updated_cells += updated_cells
-                print(f"✅ Exported {len(rows)} records for {user} to sheet '{sheet_name}'")
+                print(f"Exported {len(rows)} records for {user} to sheet '{sheet_name}'")
 
             except Exception as e:
                 error_msg = str(e)
-                print(f"❌ Error exporting for user {user}: {error_msg}")
+                print(f"Error exporting for user {user}: {error_msg}")
                 
                 # If sheet doesn't exist, create it
                 if "Unable to parse range" in error_msg or "not found" in error_msg:
@@ -831,10 +862,10 @@ def export_sheets():
                         
                         updated_cells = result.get('updatedCells', 0)
                         total_updated_cells += updated_cells
-                        print(f"✅ Created and exported {len(rows)} records for {user} to new sheet '{sheet_name}'")
+                        print(f"Created and exported {len(rows)} records for {user} to new sheet '{sheet_name}'")
                         
                     except Exception as create_error:
-                        print(f"❌ Failed to create sheet for {user}: {create_error}")
+                        print(f"Failed to create sheet for {user}: {create_error}")
                         continue
 
         return jsonify({
@@ -847,7 +878,7 @@ def export_sheets():
 
     except Exception as e:
         error_msg = str(e)
-        print("❌ Export error:", error_msg)
+        print("Export error:", error_msg)
         
         # Provide specific error messages
         if "Unable to parse" in error_msg or "not found" in error_msg:
@@ -947,11 +978,11 @@ def feedback_batch():
     items = data.get("items", [])
     verdict = data.get("verdict")  # "agreed" or "disagreed"
     
-    print(f"📥 BATCH FEEDBACK RECEIVED: {len(items)} items, verdict: {verdict}")
+    print(f"BATCH FEEDBACK RECEIVED: {len(items)} items, verdict: {verdict}")
     
     # Log the feedback details
     for i, item in enumerate(items):
-        print(f"  📝 Item {i+1}: {item.get('subject', 'No subject')} - {item.get('label')} (conf: {item.get('confidence')})")
+        print(f"  Item {i+1}: {item.get('subject', 'No subject')} - {item.get('label')} (conf: {item.get('confidence')})")
     
     # Always return success with thank you message
     return jsonify({
